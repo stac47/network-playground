@@ -1,5 +1,8 @@
 Import('base_env')
+
+src_files = Glob('src/*.cpp')
+
 base_env.Program('npserver',
-                 ['src/ServerMain.cpp'],
+                 src_files,
                  LIBS=['npcommon'],
                  LIBPATH=['#common'])

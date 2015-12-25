@@ -7,16 +7,27 @@
 namespace np {
 namespace net {
 
+class Socket;
+
+typedef std::shared_ptr<Socket> SocketPtr;
+
 class Socket
 {
     int fd_;
+    bool opened_;
+    bool closed_;
+
     std::string localAddress_;
     std::string localPort_;
 
 public:
     Socket() = delete;
-    Socket(int iFamily, int iType);
-    virtual ~Socket() {}
+    Socket(const Socket&) = delete;
+    Socket& operator=(const Socket&) = delete;
+
+    static SocketPtr Create(int iFamily, int iType);
+
+    virtual ~Socket();
 
     void connect(const std::string& iAddress,
                  const std::string& iPort);
@@ -26,12 +37,13 @@ public:
 
     void listen(int iBacklog);
 
-    Socket accept();
+    SocketPtr accept();
 
     void close();
+protected:
+    Socket(int iFamily, int iType);
 };
 
-typedef std::shared_ptr<Socket> SocketPtr;
 
 } // namespace net
 } // namespace np

@@ -6,7 +6,7 @@
 
 int main(int argc, const char* argv[])
 {
-    np::net::Socket socket(AF_INET, SOCK_STREAM);
-    socket.close();
+    np::net::SocketPtr socket = np::net::Socket::Create(AF_INET, SOCK_STREAM);
+    socket->close();
     return 0;
 }

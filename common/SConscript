@@ -1,2 +1,5 @@
 Import('base_env')
-base_env.StaticLibrary('npcommon', ['src/np/net/Socket.cpp'])
+
+src_files = Glob('src/np/net/*.cpp')
+
+base_env.StaticLibrary('npcommon', src_files)
