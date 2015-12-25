@@ -1,0 +1,5 @@
+Import('base_env')
+base_env.Program('npserver',
+                 ['src/ServerMain.cpp'],
+                 LIBS=['npcommon'],
+                 LIBPATH=['#common'])

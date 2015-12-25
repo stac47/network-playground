@@ -1,0 +1,2 @@
+Import('base_env')
+base_env.StaticLibrary('npcommon', ['src/np/net/Socket.cpp'])
