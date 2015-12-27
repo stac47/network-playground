@@ -4,5 +4,5 @@ src_files = Glob('src/*.cpp')
 
 base_env.Program('npserver',
                  src_files,
-                 LIBS=['npcommon'],
+                 LIBS=['npcommon', 'pthread', 'boost_thread', 'boost_log'],
                  LIBPATH=['#common'])

@@ -2,3 +2,5 @@
 *.a
 *.o
 server/npserver
+tags
+cscope*
