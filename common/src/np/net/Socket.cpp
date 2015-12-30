@@ -12,6 +12,7 @@
 
 #include <np/tools/make_shared_from_protected_ctor.h>
 #include <np/net/NetworkException.h>
+#include <np/net/Address.h>
 #include <np/net/Socket.h>
 
 namespace {
@@ -22,10 +23,9 @@ namespace np {
 namespace net {
 
 SocketPtr Socket::Create(SocketFamily iFamily,
-                 SocketType iType,
-                 SocketProtocol iProtocol)
+                         SocketType iType)
 {
-    return np::tools::make_shared_from_protected_ctor<Socket>(iFamily, iType, iProtocol);
+    return np::tools::make_shared_from_protected_ctor<Socket>(iFamily, iType);
 }
 
 Socket::Socket(int iFileDescriptor)
@@ -34,17 +34,12 @@ Socket::Socket(int iFileDescriptor)
     closed_(false)
 {}
 
-Socket::Socket(SocketFamily iFamily,
-               SocketType iType,
-               SocketProtocol iProtocol)
+Socket::Socket(SocketFamily iFamily, SocketType iType)
   : family_(iFamily),
     type_(iType),
-    protocol_(iProtocol),
     closed_(false)
 {
-    fd_ = socket(static_cast<int>(iFamily),
-                 static_cast<int>(iType),
-                 static_cast<int>(iProtocol));
+    fd_ = socket(static_cast<int>(iFamily), static_cast<int>(iType), 0);
     if (fd_ == -1)
     {
         throw NetworkException();
@@ -68,19 +63,8 @@ void Socket::connect(const std::string& iAddress,
 void Socket::bind(const std::string& iAddress,
                   const std::string& iPort)
 {
-    struct sockaddr_in serverAddress;
-    std::memset(&serverAddress, 0, sizeof(serverAddress));
-    serverAddress.sin_family = static_cast<int>(family_);
-    if (iAddress.empty())
-    {
-        serverAddress.sin_addr.s_addr = ::htonl(INADDR_ANY);
-    }
-    else
-    {
-        // TODO
-    }
-    serverAddress.sin_port = htons(boost::lexical_cast<int>(iPort));
-    int s = ::bind(fd_, reinterpret_cast<sockaddr*>(&serverAddress), sizeof(serverAddress));
+    AddressIPv4 serverAddress(iAddress, boost::lexical_cast<uint16_t>(iPort));
+    int s = ::bind(fd_, serverAddress.sockaddr(), serverAddress.getLength());
     if (s == 0)
     {
         BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] bound to "
@@ -117,9 +101,9 @@ SocketPtr Socket::accept()
 {
     SocketPtr clientSocketPtr = nullptr;
     int clientSocketFd = 0;
-    struct sockaddr_in clientAddress;
+    AddressIPv4 clientAddress;
     socklen_t len = 0;
-    if ((clientSocketFd = ::accept(fd_, reinterpret_cast<sockaddr*>(&clientAddress), &len)) == -1)
+    if ((clientSocketFd = ::accept(fd_, clientAddress.sockaddr(), &len)) == -1)
     {
         BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
                                  << "failed to accept a connection";
@@ -127,17 +111,13 @@ SocketPtr Socket::accept()
     }
     else
     {
-        char buffer[INET_ADDRSTRLEN];
         BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] "
-                                 << "accepted connection from remote client "
-                                 << "[IP=" << inet_ntop(static_cast<int>(family_),
-                                                        &clientAddress.sin_addr,
-                                                        buffer, sizeof(buffer))
-                                 << ", Port=" << ntohs(clientAddress.sin_port) << "]";
+                                << "accepted connection from remote client "
+                                << "[IP=" << clientAddress.getAddress()
+                                << ", Port=" << clientAddress.getPort()<< "]";
         clientSocketPtr = np::tools::make_shared_from_protected_ctor<Socket>(clientSocketFd);
-        clientSocketPtr->family_ = family_;
+        clientSocketPtr->family_ = clientAddress.getFamily();
         clientSocketPtr->type_ = type_;
-        clientSocketPtr->protocol_ = protocol_;
     }
     return clientSocketPtr;
 }
@@ -160,11 +140,11 @@ void Socket::close()
 
 ssize_t Socket::read(char* oBuffer, size_t iLen)
 {
-    ssize_t nread = 0;
     size_t nleft = iLen;
 
     while (nleft > 0)
     {
+        ssize_t nread = 0;
         if ((nread = ::read(fd_, oBuffer, nleft)) < 0)
         {
             if (errno == EINTR)
@@ -188,11 +168,11 @@ ssize_t Socket::read(char* oBuffer, size_t iLen)
 
 ssize_t Socket::write(const char* iBuffer, size_t iLen)
 {
-    ssize_t nwritten = 0;
     ssize_t nleft = iLen;
     const char* buffer = iBuffer;
     while (nleft > 0)
     {
+        ssize_t nwritten = 0;
         if ((nwritten = ::write(fd_, buffer, nleft)) <= 0)
         {
             if (nwritten < 0 && errno == EINTR)

@@ -1,7 +1,5 @@
 #include <string>
 
-#include <sys/socket.h>
-
 #include <boost/log/trivial.hpp>
 
 #include <np/net/Socket.h>

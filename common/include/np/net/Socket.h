@@ -6,26 +6,10 @@
 
 #include <sys/socket.h>
 
+#include <np/net/SocketConstants.h>
+
 namespace np {
 namespace net {
-
-enum class SocketFamily
-{
-    kIPv4 = AF_INET,
-    kIPv6 = AF_INET6
-};
-
-enum class SocketType
-{
-    kTCP = SOCK_STREAM,
-    kUDP = SOCK_DGRAM,
-    kRAW = SOCK_RAW
-};
-
-enum class SocketProtocol
-{
-    kDefault = 0
-};
 
 class Socket;
 
@@ -37,7 +21,6 @@ class Socket
 
     SocketFamily family_;
     SocketType type_;
-    SocketProtocol protocol_;
 
     bool opened_;
     bool closed_;
@@ -48,8 +31,7 @@ public:
     Socket& operator=(const Socket&) = delete;
 
     static SocketPtr Create(SocketFamily iFamily,
-                            SocketType iType,
-                            SocketProtocol iProtocol = SocketProtocol::kDefault);
+                            SocketType iType);
 
     virtual ~Socket();
 
@@ -72,8 +54,7 @@ public:
 protected:
     explicit Socket(int iFileDescriptor);
     Socket(SocketFamily iFamily,
-           SocketType iType,
-           SocketProtocol iProtocol = SocketProtocol::kDefault);
+           SocketType iType);
 };
 
 
