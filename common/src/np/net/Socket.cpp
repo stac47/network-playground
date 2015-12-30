@@ -102,7 +102,7 @@ SocketPtr Socket::accept()
     SocketPtr clientSocketPtr = nullptr;
     int clientSocketFd = 0;
     AddressIPv4 clientAddress;
-    socklen_t len = 0;
+    socklen_t len = clientAddress.getLength();
     if ((clientSocketFd = ::accept(fd_, clientAddress.sockaddr(), &len)) == -1)
     {
         BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
