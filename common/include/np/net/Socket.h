@@ -4,9 +4,8 @@
 #include <string>
 #include <memory>
 
-#include <sys/socket.h>
-
 #include <np/net/SocketConstants.h>
+#include <np/net/Address.h>
 
 namespace np {
 namespace net {
@@ -35,11 +34,9 @@ public:
 
     virtual ~Socket();
 
-    void connect(const std::string& iAddress,
-                 const std::string& iPort);
+    void connect(const AddressPtr& iAddr);
 
-    void bind(const std::string& iAddress,
-              const std::string& iPort);
+    void bind(const AddressPtr& iAddr);
 
     void listen(int iBacklog);
 

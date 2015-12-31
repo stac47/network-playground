@@ -13,6 +13,7 @@
 #include <np/tools/make_shared_from_protected_ctor.h>
 #include <np/net/NetworkException.h>
 #include <np/net/Address.h>
+#include <np/net/AddressFactory.h>
 #include <np/net/Socket.h>
 
 namespace {
@@ -55,28 +56,36 @@ Socket::~Socket()
     close();
 }
 
-void Socket::connect(const std::string& iAddress,
-                     const std::string& iPort)
+void Socket::connect(const AddressPtr& iAddr)
 {
+    int s = ::connect(fd_, iAddr->sockaddr(), iAddr->getLength());
+    if (s == 0)
+    {
+        BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] connected to "
+                                << iAddr->toString();
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
+                                 << "failed to connect to "
+                                 << iAddr->toString();
+        throw NetworkException();
+    }
 }
 
-void Socket::bind(const std::string& iAddress,
-                  const std::string& iPort)
+void Socket::bind(const AddressPtr& iAddr)
 {
-    AddressIPv4 serverAddress(iAddress, boost::lexical_cast<uint16_t>(iPort));
-    int s = ::bind(fd_, serverAddress.sockaddr(), serverAddress.getLength());
+    int s = ::bind(fd_, iAddr->sockaddr(), iAddr->getLength());
     if (s == 0)
     {
         BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] bound to "
-                                << (iAddress.empty() ? "*" : iAddress)
-                                << ":" << iPort;
+                                << iAddr->toString();
     }
     else
     {
         BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
                                  << "failed to bind to "
-                                 << (iAddress.empty() ? "*" : iAddress)
-                                 << ":" << iPort;
+                                 << iAddr->toString();
         throw NetworkException();
     }
 }
@@ -101,9 +110,9 @@ SocketPtr Socket::accept()
 {
     SocketPtr clientSocketPtr = nullptr;
     int clientSocketFd = 0;
-    AddressIPv4 clientAddress;
-    socklen_t len = clientAddress.getLength();
-    if ((clientSocketFd = ::accept(fd_, clientAddress.sockaddr(), &len)) == -1)
+    AddressPtr clientAddress = AddressFactory::CreateEmpty(family_);
+    socklen_t len = clientAddress->getLength();
+    if ((clientSocketFd = ::accept(fd_, clientAddress->sockaddr(), &len)) == -1)
     {
         BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
                                  << "failed to accept a connection";
@@ -113,10 +122,9 @@ SocketPtr Socket::accept()
     {
         BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] "
                                 << "accepted connection from remote client "
-                                << "[IP=" << clientAddress.getAddress()
-                                << ", Port=" << clientAddress.getPort()<< "]";
+                                << "[" << clientAddress->toString() << "]";
         clientSocketPtr = np::tools::make_shared_from_protected_ctor<Socket>(clientSocketFd);
-        clientSocketPtr->family_ = clientAddress.getFamily();
+        clientSocketPtr->family_ = clientAddress->getFamily();
         clientSocketPtr->type_ = type_;
     }
     return clientSocketPtr;
@@ -124,6 +132,7 @@ SocketPtr Socket::accept()
 
 void Socket::close()
 {
+    BOOST_LOG_TRIVIAL(info) << "Closing the socket [fd=" << fd_ << "]";
     if (!opened_ || closed_)
     {
         // fd_ still has the initial value. Once fd_ is set, it cannot be
@@ -136,6 +145,7 @@ void Socket::close()
         BOOST_LOG_TRIVIAL(error) << "Problem when closing the socket [fd=" << fd_ << "]";
     }
     closed_ = true;
+    BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] closed";
 }
 
 ssize_t Socket::read(char* oBuffer, size_t iLen)

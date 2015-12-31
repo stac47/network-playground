@@ -4,11 +4,16 @@
 #include <memory>
 
 #include <sys/socket.h>
+#include <netinet/in.h>
 
 #include <np/net/SocketConstants.h>
 
 namespace np {
 namespace net {
+
+class Address;
+
+typedef std::shared_ptr<Address> AddressPtr;
 
 class Address
 {
@@ -17,6 +22,9 @@ public:
 
     SocketFamily getFamily() const;
     virtual uint8_t getLength() const = 0;
+    virtual ::sockaddr* sockaddr() = 0;
+    virtual const std::string toString() const = 0;
+
 private:
     SocketFamily family_;
 };
@@ -27,13 +35,14 @@ public:
     AddressIPv4(const std::string& iAddr, uint16_t iPort);
     AddressIPv4();
 
-    ::sockaddr* sockaddr();
+    ::sockaddr* sockaddr() override;
     uint8_t getLength() const override;
-    const std::string& getAddress();
+    const std::string getAddress() const;
     uint16_t getPort() const;
+    const std::string toString() const override;
+
 private:
-    sockaddr_in rawAddress_;
-    std::string strAddress_;
+    ::sockaddr_in rawAddress_;
 };
 
 

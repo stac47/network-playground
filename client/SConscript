@@ -1,0 +1,8 @@
+Import('base_env')
+
+src_files = Glob('src/*.cpp')
+
+base_env.Program('npclient',
+                 src_files,
+                 LIBS=['npcommon', 'pthread', 'boost_thread', 'boost_log'],
+                 LIBPATH=['#common'])
