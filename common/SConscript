@@ -1,5 +1,12 @@
 Import('base_env')
+Import('test_env')
 
 src_files = Glob('src/np/net/*.cpp')
+test_files = Glob('test/np/net/*.cpp')
+test_files += Glob('test/*.cpp')
 
 base_env.StaticLibrary('npcommon', src_files)
+
+test_env.AppendUnique(LIBS=['npcommon'], LIBPATH=['#common'])
+test_env.Program('testnpcommon',
+                 test_files)

@@ -4,3 +4,5 @@
 server/npserver
 tags
 cscope*
+client/npclient
+common/testnpcommon

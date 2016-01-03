@@ -2,7 +2,5 @@ Import('base_env')
 
 src_files = Glob('src/*.cpp')
 
-base_env.Program('npserver',
-                 src_files,
-                 LIBS=['npcommon', 'pthread', 'boost_thread', 'boost_log'],
-                 LIBPATH=['#common'])
+base_env.AppendUnique(LIBS=['npcommon'], LIBPATH=['#common'])
+base_env.Program('npserver', src_files)

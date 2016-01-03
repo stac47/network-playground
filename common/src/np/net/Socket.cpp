@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <cstring>
+#include <cerrno>
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -14,11 +15,10 @@
 #include <np/net/NetworkException.h>
 #include <np/net/Address.h>
 #include <np/net/AddressFactory.h>
+#include <np/net/SocketFamily.h>
+#include <np/net/SocketType.h>
+
 #include <np/net/Socket.h>
-
-namespace {
-
-} // namespace
 
 namespace np {
 namespace net {
@@ -36,14 +36,15 @@ Socket::Socket(int iFileDescriptor)
 {}
 
 Socket::Socket(SocketFamily iFamily, SocketType iType)
-  : family_(iFamily),
+  : fd_(-1),
+    family_(iFamily),
     type_(iType),
     closed_(false)
 {
     fd_ = socket(static_cast<int>(iFamily), static_cast<int>(iType), 0);
     if (fd_ == -1)
     {
-        throw NetworkException();
+        throw NetworkException(errno);
     }
     else
     {
@@ -54,6 +55,12 @@ Socket::Socket(SocketFamily iFamily, SocketType iType)
 Socket::~Socket()
 {
     close();
+}
+
+void Socket::connect(const std::string& iAddr, uint16_t iPort)
+{
+    AddressPtr address = AddressFactory::CreateAddress(family_, iAddr, iPort);
+    connect(address);
 }
 
 void Socket::connect(const AddressPtr& iAddr)
@@ -69,8 +76,14 @@ void Socket::connect(const AddressPtr& iAddr)
         BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
                                  << "failed to connect to "
                                  << iAddr->toString();
-        throw NetworkException();
+        throw NetworkException(errno);
     }
+}
+
+void Socket::bind(const std::string& iAddr, uint16_t iPort)
+{
+    AddressPtr address = AddressFactory::CreateAddress(family_, iAddr, iPort);
+    bind(address);
 }
 
 void Socket::bind(const AddressPtr& iAddr)
@@ -86,7 +99,7 @@ void Socket::bind(const AddressPtr& iAddr)
         BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
                                  << "failed to bind to "
                                  << iAddr->toString();
-        throw NetworkException();
+        throw NetworkException(errno);
     }
 }
 
@@ -96,7 +109,7 @@ void Socket::listen(int iBacklog)
     {
         BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
                                  << "failed to become a passive listening socket";
-        throw NetworkException();
+        throw NetworkException(errno);
     }
     else
     {
@@ -116,7 +129,7 @@ SocketPtr Socket::accept()
     {
         BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
                                  << "failed to accept a connection";
-        throw NetworkException();
+        throw NetworkException(errno);
     }
     else
     {
@@ -198,6 +211,11 @@ ssize_t Socket::write(const char* iBuffer, size_t iLen)
         buffer += nwritten;
     }
     return iLen;
+}
+
+int Socket::getFd() const
+{
+    return fd_;
 }
 
 } // namespace net

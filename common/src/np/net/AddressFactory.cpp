@@ -3,11 +3,22 @@
 namespace np {
 namespace net {
 
-AddressPtr AddressFactory::CreateFromCanonicalAddress(
+AddressPtr AddressFactory::CreateAddress(
+    SocketFamily iFamily,
     const std::string& iAddress,
     uint16_t iPort)
 {
-    return nullptr;
+    AddressPtr ret = nullptr;
+    switch(iFamily)
+    {
+    case SocketFamily::kIPv4:
+        ret = std::make_shared<AddressIPv4>(iAddress, iPort);
+        break;
+    case SocketFamily::kIPv6:
+        /* ret = std::make_shared<AddressIPv6>(); */
+        break;
+    }
+    return ret;
 }
 
 AddressPtr AddressFactory::CreateEmpty(SocketFamily iFamily)

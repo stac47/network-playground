@@ -6,7 +6,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include <np/net/SocketConstants.h>
+#include <np/net/SocketFamily.h>
+#include <np/net/SocketType.h>
 
 namespace np {
 namespace net {

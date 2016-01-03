@@ -7,7 +7,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <np/net/SocketConstants.h>
+#include <np/net/SocketFamily.h>
+#include <np/net/SocketType.h>
 
 #include <np/net/Address.h>
 

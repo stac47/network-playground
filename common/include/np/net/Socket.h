@@ -4,7 +4,8 @@
 #include <string>
 #include <memory>
 
-#include <np/net/SocketConstants.h>
+#include <np/net/SocketFamily.h>
+#include <np/net/SocketType.h>
 #include <np/net/Address.h>
 
 namespace np {
@@ -16,26 +17,18 @@ typedef std::shared_ptr<Socket> SocketPtr;
 
 class Socket
 {
-    int fd_;
-
-    SocketFamily family_;
-    SocketType type_;
-
-    bool opened_;
-    bool closed_;
-
 public:
     Socket() = delete;
     Socket(const Socket&) = delete;
     Socket& operator=(const Socket&) = delete;
-
-    static SocketPtr Create(SocketFamily iFamily,
-                            SocketType iType);
-
     virtual ~Socket();
 
+    static SocketPtr Create(SocketFamily iFamily, SocketType iType);
+
+    void connect(const std::string& iAddr, uint16_t iPort);
     void connect(const AddressPtr& iAddr);
 
+    void bind(const std::string& iAddr, uint16_t iPort);
     void bind(const AddressPtr& iAddr);
 
     void listen(int iBacklog);
@@ -45,13 +38,22 @@ public:
     void close();
 
     ssize_t read(char* oBuffer, size_t iLen);
-
     ssize_t write(const char* iBuffer, size_t iLen);
+
+    int getFd() const;
 
 protected:
     explicit Socket(int iFileDescriptor);
-    Socket(SocketFamily iFamily,
-           SocketType iType);
+    Socket(SocketFamily iFamily, SocketType iType);
+
+private:
+    int fd_;
+
+    SocketFamily family_;
+    SocketType type_;
+
+    bool opened_;
+    bool closed_;
 };
 
 
