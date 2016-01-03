@@ -5,12 +5,14 @@
 #include <np/net/SocketFamily.h>
 #include <np/net/SocketType.h>
 #include <np/net/NetworkException.h>
+#include <np/net/Address.h>
 
 using np::net::SocketPtr;
 using np::net::Socket;
 using np::net::SocketFamily;
 using np::net::SocketType;
 using np::net::NetworkException;
+using np::net::AddressIPv4;
 
 TEST(SocketTest, Creation) {
     SocketPtr socket = Socket::Create(SocketFamily::kIPv4, SocketType::kTCP);
@@ -21,10 +23,11 @@ TEST(SocketTest, Creation) {
 TEST(SocketTest, ErrorBindingSamePort)
 {
     SocketPtr socket = Socket::Create(SocketFamily::kIPv4, SocketType::kTCP);
-    socket->bind("127.0.0.1", 8080);
+    auto address = std::make_shared<AddressIPv4>("127.0.0.1", 8080);
+    socket->bind(address);
     try
     {
-        socket->bind("127.0.0.1", 8080);
+        socket->bind(address);
         FAIL();
     }
     catch (const NetworkException& e)

@@ -57,12 +57,6 @@ Socket::~Socket()
     close();
 }
 
-void Socket::connect(const std::string& iAddr, uint16_t iPort)
-{
-    AddressPtr address = AddressFactory::CreateAddress(family_, iAddr, iPort);
-    connect(address);
-}
-
 void Socket::connect(const AddressPtr& iAddr)
 {
     int s = ::connect(fd_, iAddr->sockaddr(), iAddr->getLength());
@@ -78,12 +72,6 @@ void Socket::connect(const AddressPtr& iAddr)
                                  << iAddr->toString();
         throw NetworkException(errno);
     }
-}
-
-void Socket::bind(const std::string& iAddr, uint16_t iPort)
-{
-    AddressPtr address = AddressFactory::CreateAddress(family_, iAddr, iPort);
-    bind(address);
 }
 
 void Socket::bind(const AddressPtr& iAddr)

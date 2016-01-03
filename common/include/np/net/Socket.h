@@ -25,10 +25,8 @@ public:
 
     static SocketPtr Create(SocketFamily iFamily, SocketType iType);
 
-    void connect(const std::string& iAddr, uint16_t iPort);
     void connect(const AddressPtr& iAddr);
 
-    void bind(const std::string& iAddr, uint16_t iPort);
     void bind(const AddressPtr& iAddr);
 
     void listen(int iBacklog);
