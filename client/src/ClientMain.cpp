@@ -8,10 +8,10 @@
 int main(int argc, const char* argv[])
 {
 
-    using namespace np::net;
     BOOST_LOG_TRIVIAL(info) << "Client starting...";
-    SocketPtr socket = Socket::Create(SocketFamily::kIPv4, SocketType::kTCP);
-    socket->connect(std::make_shared<AddressIPv4>("127.0.0.1", 4747));
+    auto socket = np::net::Socket<np::net::AddressIPv4>::Create(np::net::SocketType::kTCP);
+    np::net::AddressIPv4 address("127.0.0.1", 4747);
+    socket->connect(address);
     char buffer[5];
     ssize_t l = socket->read(buffer, 5);
     BOOST_LOG_TRIVIAL(info) << "Reply [size=" << l << "]: " << std::string(buffer, l);

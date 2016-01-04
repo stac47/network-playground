@@ -14,8 +14,6 @@
 #include <np/tools/make_shared_from_protected_ctor.h>
 #include <np/net/NetworkException.h>
 #include <np/net/Address.h>
-#include <np/net/AddressFactory.h>
-#include <np/net/SocketFamily.h>
 #include <np/net/SocketType.h>
 
 #include <np/net/Socket.h>
@@ -23,75 +21,27 @@
 namespace np {
 namespace net {
 
-SocketPtr Socket::Create(SocketFamily iFamily,
-                         SocketType iType)
+template<typename A>
+std::shared_ptr<Socket<A>> Socket<A>::Create(SocketType iType)
 {
-    return np::tools::make_shared_from_protected_ctor<Socket>(iFamily, iType);
+    return np::tools::make_shared_from_protected_ctor<Socket>(iType);
 }
 
-Socket::Socket(int iFileDescriptor)
+template<typename A>
+Socket<A>::Socket(int iFileDescriptor)
   : fd_(iFileDescriptor),
     opened_(true),
     closed_(false)
 {}
 
-Socket::Socket(SocketFamily iFamily, SocketType iType)
-  : fd_(-1),
-    family_(iFamily),
-    type_(iType),
-    closed_(false)
-{
-    fd_ = socket(static_cast<int>(iFamily), static_cast<int>(iType), 0);
-    if (fd_ == -1)
-    {
-        throw NetworkException(errno);
-    }
-    else
-    {
-        opened_ = true;
-    }
-}
-
-Socket::~Socket()
+template<typename A>
+Socket<A>::~Socket()
 {
     close();
 }
 
-void Socket::connect(const AddressPtr& iAddr)
-{
-    int s = ::connect(fd_, iAddr->sockaddr(), iAddr->getLength());
-    if (s == 0)
-    {
-        BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] connected to "
-                                << iAddr->toString();
-    }
-    else
-    {
-        BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
-                                 << "failed to connect to "
-                                 << iAddr->toString();
-        throw NetworkException(errno);
-    }
-}
-
-void Socket::bind(const AddressPtr& iAddr)
-{
-    int s = ::bind(fd_, iAddr->sockaddr(), iAddr->getLength());
-    if (s == 0)
-    {
-        BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] bound to "
-                                << iAddr->toString();
-    }
-    else
-    {
-        BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
-                                 << "failed to bind to "
-                                 << iAddr->toString();
-        throw NetworkException(errno);
-    }
-}
-
-void Socket::listen(int iBacklog)
+template<typename A>
+void Socket<A>::listen(int iBacklog)
 {
     if (::listen(fd_, iBacklog) == -1)
     {
@@ -104,34 +54,10 @@ void Socket::listen(int iBacklog)
         BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] "
                                  << "is listening. Backlog value = " << iBacklog;
     }
-
 }
 
-SocketPtr Socket::accept()
-{
-    SocketPtr clientSocketPtr = nullptr;
-    int clientSocketFd = 0;
-    AddressPtr clientAddress = AddressFactory::CreateEmpty(family_);
-    socklen_t len = clientAddress->getLength();
-    if ((clientSocketFd = ::accept(fd_, clientAddress->sockaddr(), &len)) == -1)
-    {
-        BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
-                                 << "failed to accept a connection";
-        throw NetworkException(errno);
-    }
-    else
-    {
-        BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] "
-                                << "accepted connection from remote client "
-                                << "[" << clientAddress->toString() << "]";
-        clientSocketPtr = np::tools::make_shared_from_protected_ctor<Socket>(clientSocketFd);
-        clientSocketPtr->family_ = clientAddress->getFamily();
-        clientSocketPtr->type_ = type_;
-    }
-    return clientSocketPtr;
-}
-
-void Socket::close()
+template<typename A>
+void Socket<A>::close()
 {
     BOOST_LOG_TRIVIAL(info) << "Closing the socket [fd=" << fd_ << "]";
     if (!opened_ || closed_)
@@ -149,7 +75,91 @@ void Socket::close()
     BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] closed";
 }
 
-ssize_t Socket::read(char* oBuffer, size_t iLen)
+template<typename A>
+int Socket<A>::getFd() const
+{
+    return fd_;
+}
+
+template<typename A>
+Socket<A>::Socket(SocketType iType)
+  : fd_(-1),
+    type_(iType),
+    closed_(false)
+{
+    fd_ = socket(A::GetFamily(), static_cast<int>(iType), 0);
+    if (fd_ == -1)
+    {
+        throw NetworkException(errno);
+    }
+    else
+    {
+        opened_ = true;
+    }
+}
+
+template<typename A>
+void Socket<A>::connect(const A& iAddr)
+{
+    int s = ::connect(fd_, iAddr.sockaddr(), iAddr.getLength());
+    if (s == 0)
+    {
+        BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] connected to "
+                                << iAddr.toString();
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
+                                 << "failed to connect to "
+                                 << iAddr.toString();
+        throw NetworkException(errno);
+    }
+}
+
+template<typename A>
+void Socket<A>::bind(const A& iAddr)
+{
+    int s = ::bind(fd_, iAddr.sockaddr(), iAddr.getLength());
+    if (s == 0)
+    {
+        BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] bound to "
+                                << iAddr.toString();
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
+                                 << "failed to bind to "
+                                 << iAddr.toString();
+        throw NetworkException(errno);
+    }
+}
+
+template<typename A>
+std::shared_ptr<Socket<A>> Socket<A>::accept()
+{
+    std::shared_ptr<Socket<A>> clientSocketPtr = nullptr;
+    int clientSocketFd = 0;
+    A clientAddress;
+    socklen_t len = clientAddress.getLength();
+    if ((clientSocketFd = ::accept(fd_, clientAddress.sockaddr(), &len)) == -1)
+    {
+        BOOST_LOG_TRIVIAL(error) << "Socket [fd=" << fd_ << "] "
+                                 << "failed to accept a connection";
+        throw NetworkException(errno);
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(info) << "Socket [fd=" << fd_ << "] "
+                                << "accepted connection from remote client "
+                                << "[" << clientAddress.toString() << "]";
+        clientSocketPtr = np::tools::make_shared_from_protected_ctor<Socket<A>>(clientSocketFd);
+        clientSocketPtr->type_ = type_;
+    }
+    return clientSocketPtr;
+}
+
+template<typename A>
+ssize_t Socket<A>::read(char* oBuffer, size_t iLen)
 {
     size_t nleft = iLen;
 
@@ -177,7 +187,8 @@ ssize_t Socket::read(char* oBuffer, size_t iLen)
     return (iLen - nleft);
 }
 
-ssize_t Socket::write(const char* iBuffer, size_t iLen)
+template<typename A>
+ssize_t Socket<A>::write(const char* iBuffer, size_t iLen)
 {
     ssize_t nleft = iLen;
     const char* buffer = iBuffer;
@@ -201,9 +212,32 @@ ssize_t Socket::write(const char* iBuffer, size_t iLen)
     return iLen;
 }
 
-int Socket::getFd() const
+template<typename A>
+std::shared_ptr<A> Socket<A>::getLocalAddress() const
 {
-    return fd_;
+    auto ret = std::make_shared<A>();
+    socklen_t len = ret->getLength();
+    if (::getsockname(fd_, ret->sockaddr(), &len) == -1)
+    {
+        BOOST_LOG_TRIVIAL(error) << "Unable to get local address from "
+                                 << "socket [fd=" << fd_ << "] ";
+        ret = nullptr;
+    }
+    return ret;
+}
+
+template<typename A>
+std::shared_ptr<A> Socket<A>::getRemoteAddress() const
+{
+    auto ret = std::make_shared<A>();
+    socklen_t len = ret->getLength();
+    if (::getpeername(fd_, ret->sockaddr(), &len) == -1)
+    {
+        BOOST_LOG_TRIVIAL(error) << "Unable to get remote address from "
+                                 << "socket [fd=" << fd_ << "] ";
+        ret = nullptr;
+    }
+    return ret;
 }
 
 } // namespace net

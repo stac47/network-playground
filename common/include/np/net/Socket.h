@@ -4,17 +4,13 @@
 #include <string>
 #include <memory>
 
-#include <np/net/SocketFamily.h>
 #include <np/net/SocketType.h>
 #include <np/net/Address.h>
 
 namespace np {
 namespace net {
 
-class Socket;
-
-typedef std::shared_ptr<Socket> SocketPtr;
-
+template<typename A>
 class Socket
 {
 public:
@@ -23,37 +19,35 @@ public:
     Socket& operator=(const Socket&) = delete;
     virtual ~Socket();
 
-    static SocketPtr Create(SocketFamily iFamily, SocketType iType);
+    static std::shared_ptr<Socket<A>> Create(SocketType iType);
 
-    void connect(const AddressPtr& iAddr);
-
-    void bind(const AddressPtr& iAddr);
-
+    void connect(const A& iAddr);
+    void bind(const A& iAddr);
     void listen(int iBacklog);
-
-    SocketPtr accept();
-
+    std::shared_ptr<Socket<A>> accept();
     void close();
 
     ssize_t read(char* oBuffer, size_t iLen);
     ssize_t write(const char* iBuffer, size_t iLen);
 
     int getFd() const;
+    std::shared_ptr<A> getLocalAddress() const;
+    std::shared_ptr<A> getRemoteAddress() const;
 
 protected:
     explicit Socket(int iFileDescriptor);
-    Socket(SocketFamily iFamily, SocketType iType);
+    Socket(SocketType iType);
 
 private:
     int fd_;
 
-    SocketFamily family_;
     SocketType type_;
 
     bool opened_;
     bool closed_;
 };
 
+template class Socket<AddressIPv4>;
 
 } // namespace net
 } // namespace np

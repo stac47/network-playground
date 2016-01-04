@@ -1,3 +1,6 @@
+#ifndef __MAKE_SHARED_FROM_PROTECTED_CTOR_H__
+#define __MAKE_SHARED_FROM_PROTECTED_CTOR_H__
+
 #include <memory>
 #include <utility>
 
@@ -17,3 +20,5 @@ std::shared_ptr<T> make_shared_from_protected_ctor(Args && ... args)
 
 } // namespace tools
 } // namespace np
+
+#endif /* __MAKE_SHARED_FROM_PROTECTED_CTOR_H__ */

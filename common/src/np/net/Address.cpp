@@ -7,7 +7,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <np/net/SocketFamily.h>
 #include <np/net/SocketType.h>
 
 #include <np/net/Address.h>
@@ -15,23 +14,17 @@
 namespace np {
 namespace net {
 
-Address::Address(SocketFamily iFamily)
-  : family_(iFamily)
-{}
-
-SocketFamily Address::getFamily() const
+int AddressIPv4::GetFamily()
 {
-    return family_;
+    return AF_INET;
 }
 
 AddressIPv4::AddressIPv4()
-  : Address(SocketFamily::kIPv4)
 {
     std::memset(&rawAddress_, 0, sizeof(rawAddress_));
 }
 
 AddressIPv4::AddressIPv4(const std::string& iAddr, uint16_t iPort)
-  : Address(SocketFamily::kIPv4)
 {
     std::memset(&rawAddress_, 0, sizeof(rawAddress_));
     rawAddress_.sin_family = static_cast<int>(AF_INET);
@@ -46,14 +39,19 @@ AddressIPv4::AddressIPv4(const std::string& iAddr, uint16_t iPort)
     rawAddress_.sin_port = htons(iPort);
 }
 
-uint8_t AddressIPv4::getLength() const
+socklen_t AddressIPv4::getLength() const
 {
-    return sizeof(sockaddr_in);
+    return sizeof(::sockaddr_in);
 }
 
 ::sockaddr* AddressIPv4::sockaddr()
 {
     return reinterpret_cast<::sockaddr*>(&rawAddress_);
+}
+
+const ::sockaddr* AddressIPv4::sockaddr() const
+{
+    return reinterpret_cast<const ::sockaddr*>(&rawAddress_);
 }
 
 const std::string AddressIPv4::getAddress() const

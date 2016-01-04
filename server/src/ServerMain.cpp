@@ -9,10 +9,11 @@ int main(int argc, const char* argv[])
 {
     using namespace np::net;
     BOOST_LOG_TRIVIAL(info) << "Server starting...";
-    SocketPtr socket = Socket::Create(SocketFamily::kIPv4, SocketType::kTCP);
-    socket->bind(std::make_shared<AddressIPv4>("127.0.0.1", 4747));
+    auto socket = Socket<AddressIPv4>::Create(SocketType::kTCP);
+    AddressIPv4 address("127.0.0.1", 4747);
+    socket->bind(address);
     socket->listen(5);
-    SocketPtr clientSocket = socket->accept();
+    auto clientSocket = socket->accept();
     std::string s = "Hello World\n";
     clientSocket->write(s.data(), s.size());
     char buffer[5];
