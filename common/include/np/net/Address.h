@@ -24,26 +24,6 @@ public:
     virtual const std::string toString() const = 0;
 };
 
-class AddressIPv4 : public Address
-{
-public:
-    static int GetFamily();
-
-    AddressIPv4(const std::string& iAddr, uint16_t iPort);
-    AddressIPv4();
-
-    ::sockaddr* sockaddr() override;
-    const ::sockaddr* sockaddr() const override;
-    socklen_t getLength() const override;
-    const std::string getAddress() const;
-    uint16_t getPort() const;
-    const std::string toString() const override;
-
-private:
-    ::sockaddr_in rawAddress_;
-};
-
-
 } // namespace net
 } // namespace np
 #endif /* __ADDRESS_H__ */

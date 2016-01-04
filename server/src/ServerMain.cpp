@@ -3,7 +3,7 @@
 #include <boost/log/trivial.hpp>
 
 #include <np/net/Socket.h>
-#include <np/net/Address.h>
+#include <np/net/AddressIPv4.h>
 
 int main(int argc, const char* argv[])
 {

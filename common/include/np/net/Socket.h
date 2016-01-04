@@ -5,7 +5,7 @@
 #include <memory>
 
 #include <np/net/SocketType.h>
-#include <np/net/Address.h>
+#include <np/net/AddressIPv4.h>
 
 namespace np {
 namespace net {
