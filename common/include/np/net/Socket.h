@@ -5,13 +5,14 @@
 #include <memory>
 
 #include <np/net/SocketType.h>
+#include <np/net/SocketInterface.h>
 #include <np/net/AddressIPv4.h>
 
 namespace np {
 namespace net {
 
 template<typename A>
-class Socket
+class Socket final : public SocketInterface
 {
 public:
     Socket() = delete;
@@ -23,28 +24,14 @@ public:
 
     void connect(const A& iAddr);
     void bind(const A& iAddr);
-    void listen(int iBacklog);
     std::shared_ptr<Socket<A>> accept();
-    void close();
 
-    ssize_t read(char* oBuffer, size_t iLen);
-    ssize_t write(const char* iBuffer, size_t iLen);
-
-    int getFd() const;
     std::shared_ptr<A> getLocalAddress() const;
     std::shared_ptr<A> getRemoteAddress() const;
 
 protected:
-    explicit Socket(int iFileDescriptor);
-    Socket(SocketType iType);
-
-private:
-    int fd_;
-
-    SocketType type_;
-
-    bool opened_;
-    bool closed_;
+    explicit Socket(SocketType iType, int iFileDescriptor);
+    explicit Socket(SocketType iType);
 };
 
 template class Socket<AddressIPv4>;
